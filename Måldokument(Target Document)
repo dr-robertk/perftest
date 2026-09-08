@@ -92,13 +92,12 @@ The thesis will combine a literature study with an experimental evaluation using
 
 A literature review will be conducted covering relevant research and established practices within areas including:
 
-* software performance benchmarking;
+* performance benchmarking of numerical and scientific-computing software.
 * performance regression detection;
 * benchmark reproducibility and variability;
 * performance measurement in virtualized and cloud environments;
 * statistical methods for detecting performance changes;
 * benchmark normalization and calibration techniques;
-* performance benchmarking of numerical and scientific-computing software.
 
 The literature review will establish the scientific foundation of the thesis and identify existing methods that may be applicable to heterogeneous CI environments.
 
