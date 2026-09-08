@@ -12,3 +12,184 @@ key references to articles or other supporting material. How is the thesis expec
 
 Preliminary description of resources required for the implementation of the work, e.g. workplace and equipment, 
 and how these are arranged and available.
+
+
+
+
+
+# Måldokument – Master's Thesis
+
+## Working title
+
+**Reliable Performance Regression Detection in Heterogeneous CI/CD Environments**
+
+### Student
+
+**Name:** Patrik Liedbeck
+**Programme:** [Programme]
+**Email:** [Email]
+
+### Supervisors and examiner
+
+**Examiner:** [Name]
+**Academic supervisor:** [Name]
+**Company supervisor:** [Name]
+**Company/organisation:** [Company]
+
+### Preliminary timeline
+
+**Start date:** December [Year]
+**Expected completion:** [Month, Year]
+
+---
+
+## 1. Background, Context and Motivation
+
+Continuous Integration and Continuous Deployment (CI/CD) systems are widely used to automate software testing and increasingly also to execute performance benchmarks. By incorporating performance testing into CI pipelines, software projects can continuously monitor performance and identify regressions introduced by changes to the codebase.
+
+Reliable performance regression detection, however, depends on benchmark results being sufficiently reproducible and comparable between executions. This becomes challenging when benchmarks are executed in heterogeneous or partially unknown environments, such as cloud-hosted CI runners. Platforms such as GitHub Actions may execute jobs on different underlying machines, and differences in processor architecture, processor generation, available resources, virtualization, system load, and other environmental factors can influence benchmark results independently of changes to the software being tested.
+
+Consequently, a difference between two benchmark results does not necessarily represent a software performance regression. It may instead originate from differences in the infrastructure on which the benchmarks were executed.
+
+A straightforward approach is to rerun both the current and previous software versions on the same hardware. However, repeatedly executing historical versions increases CI execution time and computational cost and may not always be practical. An alternative would be to compensate for differences between execution environments, allowing newly obtained benchmark results to be compared with historical measurements without rerunning the corresponding historical commits.
+
+This thesis investigates whether such comparisons can be made sufficiently reliable through normalization, reference benchmarks, statistical techniques, or related methods for accounting for hardware-induced performance variation.
+
+### Application domain
+
+The experimental evaluation will be delimited to **numerical-analysis and scientific-computing applications**, with a focus on computationally intensive numerical algorithms that can be implemented and compiled as **C++ applications**.
+
+The application domain is motivated by Lund University's course **NUMN21 – Numerical Analysis: Advanced Course in Numerical Algorithms with Python/SciPy**, which focuses on advanced numerical algorithms and scientific computing, including the implementation, testing, and performance assessment of numerical software.
+
+The numerical algorithms selected for the experiments will be representative of this domain while being suitable for implementation in C++. The benchmarked applications will therefore consist of compiled C++ programs or components, allowing the experiments to investigate performance characteristics of computational workloads in a compiled environment.
+
+The benchmarking and experimental infrastructure itself will be implemented primarily in **Python**. Python will be used to orchestrate benchmark executions, interact with the CI/CD environment, collect and process benchmark results, and perform statistical analysis.
+
+This separation between the benchmark infrastructure and the applications being benchmarked allows the thesis to focus on the reliability of performance measurements and regression detection independently of the language used to implement the benchmarking framework.
+
+The numerical-analysis domain is therefore considered an **experimental delimitation rather than the primary research subject**. The thesis investigates the reliability of performance regression detection methods, using numerical algorithms implemented in C++ as the application domain in which these methods are evaluated.
+
+---
+
+## 2. Overall Goal and Research Questions
+
+The overall goal of the thesis is to investigate and evaluate methods for reliable performance regression detection when numerical-analysis software is benchmarked across heterogeneous CI/CD environments.
+
+In particular, the thesis will investigate whether benchmark results obtained on different or partially unknown hardware can be normalized or otherwise adjusted so that meaningful comparisons can be made against historical benchmark results without requiring the historical software versions to be rerun.
+
+The thesis will address the following research questions:
+
+1. **How does variation in the underlying execution environment affect the reliability and reproducibility of performance benchmarks for numerical algorithms in CI/CD environments?**
+
+2. **To what extent can benchmark results for compiled numerical applications be normalized across heterogeneous or partially unknown hardware environments?**
+
+3. **Which normalization, reference-benchmark, or statistical methods are most effective at distinguishing software-induced performance changes from infrastructure-related variation?**
+
+4. **How reliably can performance regressions in numerical-analysis software be detected against historical benchmark results without rerunning benchmarks for previous software revisions?**
+
+The aim is not necessarily to eliminate all hardware-related variation, but to determine under which conditions reliable cross-environment comparisons are possible and what limitations remain.
+
+---
+
+## 3. Approach and Methodology
+
+The thesis will combine a literature study with an experimental evaluation using numerical-analysis and scientific-computing workloads.
+
+### Literature study
+
+A literature review will be conducted covering relevant research and established practices within areas including:
+
+* software performance benchmarking;
+* performance regression detection;
+* benchmark reproducibility and variability;
+* performance measurement in virtualized and cloud environments;
+* statistical methods for detecting performance changes;
+* benchmark normalization and calibration techniques;
+* performance benchmarking of numerical and scientific-computing software.
+
+The literature review will establish the scientific foundation of the thesis and identify existing methods that may be applicable to heterogeneous CI environments.
+
+### Experimental study
+
+An experimental benchmarking environment will be developed in which numerical algorithms can be executed under different hardware and/or CI runner configurations.
+
+The applications being benchmarked will be implemented as **compiled C++ programs**, with the selected workloads representing computationally relevant numerical-analysis tasks. Candidate workloads may include numerical linear algebra, numerical integration, iterative algorithms, or other computationally intensive numerical algorithms, depending on their suitability for reproducible benchmarking.
+
+The **benchmarking and analysis infrastructure will be implemented in Python**. It will be responsible for orchestrating benchmark executions, collecting measurements, recording relevant execution-environment information, and analysing the resulting data.
+
+Repeated benchmark executions will be used to characterize both within-environment and between-environment variation. The experiments will investigate how much measured performance changes when the software and algorithm remain unchanged but the execution environment differs.
+
+Based on the literature review and initial experiments, one or more approaches for compensating for environmental variation will be implemented and evaluated. Candidate approaches may include:
+
+* reference or calibration benchmarks executed alongside the target benchmark;
+* relative performance measurements;
+* normalization based on characteristics of the execution environment;
+* statistical modelling of benchmark variation;
+* statistical change or regression detection techniques.
+
+Controlled software performance changes may be introduced to evaluate whether the investigated methods can correctly distinguish actual software regressions from infrastructure-related variation.
+
+The approaches will be compared using appropriate measures such as detection accuracy, false-positive and false-negative rates, sensitivity to regression magnitude, and stability across execution environments.
+
+The final methodology and experimental design may be refined based on findings from the literature review and preliminary experiments.
+
+---
+
+## 4. Scientific Foundation and Established Experience
+
+The thesis will build upon existing research in software performance engineering, benchmarking, statistical performance analysis, reproducibility of experiments, and performance measurement in cloud and virtualized computing environments.
+
+Particular attention will be given to previous work concerning performance regression detection and the statistical treatment of noisy benchmark measurements. Existing research concerning benchmarking in heterogeneous or virtualized environments will provide a foundation for understanding the effects of infrastructure variability.
+
+The thesis will additionally draw on established practices in numerical analysis and scientific computing. NUMN21 provides a relevant application context through its focus on advanced numerical algorithms and the development, testing, and performance assessment of numerical software.
+
+The scientific foundation will be established through a structured literature search using relevant academic databases and publications within software engineering, computer systems, numerical analysis, and scientific computing.
+
+**Preliminary references:**
+
+1. [Reference concerning performance regression detection]
+2. [Reference concerning benchmark variability/reproducibility]
+3. [Reference concerning performance benchmarking in cloud/virtualized environments]
+4. [Reference concerning benchmarking or performance analysis of numerical/scientific software]
+
+---
+
+## 5. Expected Contribution to Knowledge
+
+The thesis is expected to contribute empirical knowledge about the impact of heterogeneous execution environments on automated performance benchmarking of numerical-analysis software.
+
+More specifically, the work aims to provide:
+
+* an empirical characterization of benchmark variability across different CI execution environments;
+* an evaluation of methods for compensating for hardware- and infrastructure-induced performance variation;
+* an assessment of the circumstances under which historical benchmark measurements can be compared with new measurements without rerunning historical software revisions;
+* an analysis of the limitations and trade-offs associated with the investigated approaches;
+* practical guidance for applying performance regression detection to compiled numerical and scientific-computing software in heterogeneous CI/CD environments.
+
+Where appropriate, the thesis will also produce a prototype implementation consisting of a Python-based benchmarking and analysis framework integrated with a CI/CD environment and C++ numerical applications.
+
+The intended contribution is therefore not only a technical implementation but an experimentally supported evaluation of whether, and under which conditions, reliable performance regression detection across heterogeneous CI environments is feasible.
+
+The numerical-analysis application domain provides a controlled and technically meaningful context for the evaluation, while the underlying findings may provide insights relevant to other computationally intensive software domains.
+
+---
+
+## 6. Required Resources
+
+The thesis is expected to require the following resources:
+
+* access to one or more CI/CD environments capable of executing automated benchmarks;
+* access to heterogeneous execution environments or runners with different hardware characteristics;
+* C++ compiler toolchains suitable for compiling the numerical applications;
+* representative numerical algorithms and scientific-computing workloads suitable for implementation in C++;
+* Python and relevant libraries for benchmark orchestration, data processing, and statistical analysis;
+* sufficient computational resources to perform repeated benchmark executions;
+* storage and tooling for collecting and analysing benchmark measurements;
+* development tools required to implement the prototype and experimental infrastructure;
+* access to relevant scientific literature through Lund University.
+
+[Company/organisation] will provide [workstation, CI infrastructure, cloud resources, repositories, etc., as applicable].
+
+Lund University provides access to academic literature and academic supervision.
+
+The exact experimental infrastructure, numerical algorithms, and benchmark suite will be determined during the initial phase of the thesis based on availability, reproducibility requirements, and the findings of the literature study.
