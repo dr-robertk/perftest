@@ -27,15 +27,17 @@ and how these are arranged and available.
 ### Student
 
 **Name:** Patrik Liedbeck
-**Programme:** [Programme]
-**Email:** [Email]
+**Programme:** E
+**Email:** liedbeck@outlook.com
 
+
+**Name:** Lukas Elmlund
+**Programme:** E
+**Email:** lukas.elmlund@outlook.com
 ### Supervisors and examiner
 
-**Examiner:** [Name]
-**Academic supervisor:** [Name]
-**Company supervisor:** [Name]
-**Company/organisation:** [Company]
+**Examiner:** Tony Stillfjord
+**Academic supervisor:** Robert Klöfkorn
 
 ### Preliminary timeline
 
@@ -59,8 +61,6 @@ This thesis investigates whether such comparisons can be made sufficiently relia
 ### Application domain
 
 The experimental evaluation will be delimited to **numerical-analysis and scientific-computing applications**, with a focus on computationally intensive numerical algorithms that can be implemented and compiled as **C++ applications**.
-
-The application domain is motivated by Lund University's course **NUMN21 – Numerical Analysis: Advanced Course in Numerical Algorithms with Python/SciPy**, which focuses on advanced numerical algorithms and scientific computing, including the implementation, testing, and performance assessment of numerical software.
 
 The numerical algorithms selected for the experiments will be representative of this domain while being suitable for implementation in C++. The benchmarked applications will therefore consist of compiled C++ programs or components, allowing the experiments to investigate performance characteristics of computational workloads in a compiled environment.
 
