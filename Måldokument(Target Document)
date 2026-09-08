@@ -60,15 +60,9 @@ This thesis investigates whether such comparisons can be made sufficiently relia
 
 ### Application domain
 
-The experimental evaluation will be delimited to **numerical-analysis and scientific-computing applications**, with a focus on computationally intensive numerical algorithms that can be implemented and compiled as **C++ applications**.
-
-The numerical algorithms selected for the experiments will be representative of this domain while being suitable for implementation in C++. The benchmarked applications will therefore consist of compiled C++ programs or components, allowing the experiments to investigate performance characteristics of computational workloads in a compiled environment.
+The experimental evaluation will be delimited to **numerical-analysis and scientific-computing applications**.
 
 The benchmarking and experimental infrastructure itself will be implemented primarily in **Python**. Python will be used to orchestrate benchmark executions, interact with the CI/CD environment, collect and process benchmark results, and perform statistical analysis.
-
-This separation between the benchmark infrastructure and the applications being benchmarked allows the thesis to focus on the reliability of performance measurements and regression detection independently of the language used to implement the benchmarking framework.
-
-The numerical-analysis domain is therefore considered an **experimental delimitation rather than the primary research subject**. The thesis investigates the reliability of performance regression detection methods, using numerical algorithms implemented in C++ as the application domain in which these methods are evaluated.
 
 ---
 
