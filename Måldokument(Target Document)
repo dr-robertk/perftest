@@ -76,11 +76,9 @@ The thesis will address the following research questions:
 
 1. **How does variation in the underlying execution environment affect the reliability and reproducibility of performance benchmarks for numerical algorithms in CI/CD environments?**
 
-2. **To what extent can benchmark results for compiled numerical applications be normalized across heterogeneous or partially unknown hardware environments?**
+2. **To what extent can benchmark results for numerical applications be normalized across heterogeneous or partially unknown hardware environments?**
 
-3. **Which normalization, reference-benchmark, or statistical methods are most effective at distinguishing software-induced performance changes from infrastructure-related variation?**
-
-4. **How reliably can performance regressions in numerical-analysis software be detected against historical benchmark results without rerunning benchmarks for previous software revisions?**
+3. **What techniques or methods are most effective in normalizing infrastructure related performance variation?** 
 
 The aim is not necessarily to eliminate all hardware-related variation, but to determine under which conditions reliable cross-environment comparisons are possible and what limitations remain.
 
