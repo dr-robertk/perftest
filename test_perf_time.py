@@ -1,13 +1,7 @@
-from bisection import bisect
-
-
-def process_data(items):
-    return sorted(x * 2 for x in items)
+from singleThread import solveDirichletNeumann
 
 
 def test_process_data(benchmark):
-    items = list(range(10_000))
+    result = benchmark.pedantic(solveDirichletNeumann, iterations=2, rounds=20)
 
-    result = benchmark(process_data, items)
-
-    assert len(result) == 10_000
+    assert len(result) == 3
