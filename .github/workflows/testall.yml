@@ -55,3 +55,9 @@ jobs:
         with:
           name: benchmark-python-${{ matrix.python-version }}
           path: benchmark-${{ matrix.python-version }}.json
+
+      - name: Ingest benchmark results into Supabase
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          python ingest_benchmarks.py benchmark-${{ matrix.python-version }}.json

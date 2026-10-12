@@ -1,21 +1,22 @@
 import numpy as np
 
-from config import ITERATIONS, H, W, omega1, omega2, omega3
+from config import ITERATIONS, N, W, omega1, omega2, omega3, step_size
 
 # from room import plot_temp_rooms
 
 
-def solveDirichletNeumann():
+def solveDirichletNeumann(n=N, iterations=ITERATIONS):
 
-    o1 = omega1()
-    o2 = omega2()
-    o3 = omega3()
+    H = step_size(n)
+    o1 = omega1(n)
+    o2 = omega2(n)
+    o3 = omega3(n)
 
     ########################### Dirchlet Neumann iterations ###########################
     t1s = []
     t2s = []
     t3s = []
-    for i in range(ITERATIONS):
+    for i in range(iterations):
         t2, *_ = o2.solveDirichlet()
         left, _, right, _ = o2.neumannValues(t2, H)
 
