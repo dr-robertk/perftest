@@ -10,7 +10,7 @@ on:
 
   # Run every 4 hours
   schedule:
-    - cron: '0 */4 * * *'
+    - cron: '0 */2 * * *'
   # Run when a PR targets main
   pull_request:
     branches: ["main"]
