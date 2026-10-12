@@ -155,10 +155,10 @@ def ingest_file(conn, path: Path) -> None:
     with conn.cursor() as cur:
         cur.execute(
             """SELECT id FROM runs
-               WHERE commit_sha IS %(commit_sha)s
-                 AND python_version IS %(python_version)s
-                 AND ci_run_id IS %(ci_run_id)s
-                 AND ci_job IS %(ci_job)s""",
+               WHERE commit_sha IS NOT DISTINCT FROM %(commit_sha)s
+                 AND python_version IS NOT DISTINCT FROM %(python_version)s
+                 AND ci_run_id IS NOT DISTINCT FROM %(ci_run_id)s
+                 AND ci_job IS NOT DISTINCT FROM %(ci_job)s""",
             run,
         )
         existing = cur.fetchone()
