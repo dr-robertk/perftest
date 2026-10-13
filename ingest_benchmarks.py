@@ -2,7 +2,10 @@
 """Ingest pytest-benchmark JSON output into a Supabase (Postgres) database.
 
 Usage:
-    SUPABASE_DB_URL=postgresql://... python ingest_benchmarks.py benchmark-*.json
+    python ingest_benchmarks.py benchmark-*.json
+
+Reads SUPABASE_DB_URL from the environment, or from a .env file in the
+current directory (never committed - see .gitignore) if not already set.
 """
 
 import argparse
@@ -13,6 +16,18 @@ from pathlib import Path
 
 import psycopg2
 import psycopg2.extras
+
+
+def _load_dotenv(path: str = ".env") -> None:
+    if not os.path.exists(path):
+        return
+    with open(path) as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            key, _, value = line.partition("=")
+            os.environ.setdefault(key.strip(), value.strip())
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS runs (
@@ -189,6 +204,8 @@ def ingest_file(conn, path: Path) -> None:
 
 
 def main() -> None:
+    _load_dotenv()
+
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "json_files", nargs="+", type=Path, help="pytest-benchmark JSON file(s)"
