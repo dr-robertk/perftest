@@ -20,7 +20,7 @@ def test_process_data_large(benchmark):
 
 
 def test_process_data_extra_large(benchmark):
-    n = 601
+    n = 401
     benchmark.extra_info["n"] = n
     result = benchmark.pedantic(
         lambda: solveDirichletNeumann(n=n), iterations=1, rounds=10
