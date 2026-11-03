@@ -52,6 +52,50 @@ ORDER BY r.ingested_at, b.name;
 """
 
 
+TARGET_NAME = "test_process_data_large"
+ANCHOR_NAMES = ["test_anchor_matmul", "test_anchor_memcopy"]
+
+
+def print_anchor_normalization(df: pd.DataFrame) -> None:
+    print("\nAnchor-normalization check:")
+    pivot = df.pivot_table(index=["run_id", "cpu_brand"], columns="name", values="mean_seconds")
+
+    needed = [TARGET_NAME] + ANCHOR_NAMES
+    missing = [c for c in needed if c not in pivot.columns]
+    if missing:
+        print(f"  not enough data yet - missing columns: {missing}")
+        return
+
+    paired = pivot.dropna(subset=needed).reset_index()
+    if paired.empty:
+        print("  no runs yet have both the target benchmark and both anchors")
+        return
+
+    ratio_cols = []
+    for anchor in ANCHOR_NAMES:
+        col = f"ratio_vs_{anchor}"
+        paired[col] = paired[TARGET_NAME] / paired[anchor]
+        ratio_cols.append(col)
+
+    print(f"  {len(paired)} runs have both {TARGET_NAME!r} and both anchors\n")
+    print(
+        paired.groupby("cpu_brand")[[TARGET_NAME] + ratio_cols]
+        .agg(["count", "mean", "std"])
+    )
+
+    print(
+        "\n  Between-CPU-model spread (max/min of per-model means) - "
+        "lower means better normalized:"
+    )
+    for col in [TARGET_NAME] + ratio_cols:
+        means_by_cpu = paired.groupby("cpu_brand")[col].mean()
+        if len(means_by_cpu) < 2:
+            print(f"    {col:30s} only {len(means_by_cpu)} CPU model(s) with paired data so far")
+            continue
+        spread = means_by_cpu.max() / means_by_cpu.min()
+        print(f"    {col:30s} {spread:.2f}x")
+
+
 def print_status(df: pd.DataFrame) -> None:
     print(f"{len(df)} benchmark rows across {df['run_id'].nunique()} runs")
     print(df.groupby("python_version")["run_id"].nunique().rename("runs"))
@@ -130,6 +174,8 @@ def main() -> None:
         .agg(["count", "mean", "std"])
         .reset_index()
     )
+
+    print_anchor_normalization(df)
 
 
 if __name__ == "__main__":
