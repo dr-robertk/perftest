@@ -1,0 +1,10 @@
+services:
+  baseline:
+    build: .
+    restart: unless-stopped
+    volumes:
+      - .:/app
+    env_file:
+      - .env
+    environment:
+      - BASELINE_INTERVAL_SECONDS=3600

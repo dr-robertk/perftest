@@ -11,6 +11,7 @@ current directory (never committed - see .gitignore) if not already set.
 import argparse
 import json
 import os
+import uuid
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -124,8 +125,12 @@ def run_fields(payload: dict, source_file: str) -> dict:
         "cpu_brand": cpu.get("brand_raw"),
         "cpu_arch": cpu.get("arch"),
         "cpu_count": cpu.get("count"),
-        "ci_provider": "github" if os.environ.get("GITHUB_ACTIONS") else None,
-        "ci_run_id": os.environ.get("GITHUB_RUN_ID"),
+        "ci_provider": "github" if os.environ.get("GITHUB_ACTIONS") else "local",
+        # Locally there's no GITHUB_RUN_ID to make repeated runs on the same
+        # commit distinct, so the dedup check (ci_run_id IS NOT DISTINCT FROM)
+        # would otherwise treat every local run after the first as a
+        # duplicate and silently skip it. A fresh id per invocation fixes that.
+        "ci_run_id": os.environ.get("GITHUB_RUN_ID") or str(uuid.uuid4()),
         "ci_run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT"),
         "ci_job": os.environ.get("GITHUB_JOB"),
         "ci_workflow": os.environ.get("GITHUB_WORKFLOW"),
