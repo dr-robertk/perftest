@@ -130,7 +130,18 @@ def run_fields(payload: dict, source_file: str) -> dict:
         # commit distinct, so the dedup check (ci_run_id IS NOT DISTINCT FROM)
         # would otherwise treat every local run after the first as a
         # duplicate and silently skip it. A fresh id per invocation fixes that.
-        "ci_run_id": os.environ.get("GITHUB_RUN_ID") or str(uuid.uuid4()),
+        #
+        # GITHUB_RUN_ID and GITHUB_JOB are also identical across all matrix
+        # legs within one workflow run (matrix.python-version used to be the
+        # thing disambiguating them in the uniqueness key). Now that the
+        # matrix legs all run the same Python version, CI_MATRIX_LABEL (set
+        # per-leg in the workflow) folds into ci_run_id so legs don't collide.
+        "ci_run_id": "-".join(
+            filter(None, [
+                os.environ.get("GITHUB_RUN_ID") or str(uuid.uuid4()),
+                os.environ.get("CI_MATRIX_LABEL"),
+            ])
+        ),
         "ci_run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT"),
         "ci_job": os.environ.get("GITHUB_JOB"),
         "ci_workflow": os.environ.get("GITHUB_WORKFLOW"),
