@@ -48,9 +48,29 @@ jobs:
 
       - name: Run performance benchmarks
         run: |
+          # Snapshot /proc/stat's "steal" field (CPU time the hypervisor gave
+          # to another tenant instead of us) before and after, so we can
+          # record what share of this run's wall-clock was lost to that -
+          # a direct measurement of co-tenancy contention, rather than
+          # inferring it indirectly from how noisy the results look.
+          read -r _ u1 n1 s1 i1 w1 irq1 sirq1 st1 _ < /proc/stat
+          total1=$((u1+n1+s1+i1+w1+irq1+sirq1+st1))
+
           pytest \
             --benchmark-only \
             --benchmark-json=benchmark-${{ matrix.replica }}.json
+
+          read -r _ u2 n2 s2 i2 w2 irq2 sirq2 st2 _ < /proc/stat
+          total2=$((u2+n2+s2+i2+w2+irq2+sirq2+st2))
+          steal_delta=$((st2 - st1))
+          total_delta=$((total2 - total1))
+          if [ "$total_delta" -gt 0 ]; then
+            steal_pct=$(awk -v s="$steal_delta" -v t="$total_delta" 'BEGIN { printf "%.4f", (s/t)*100 }')
+          else
+            steal_pct="0"
+          fi
+          echo "Steal time during benchmark run: ${steal_pct}%"
+          echo "STEAL_PCT=$steal_pct" >> "$GITHUB_ENV"
 
       - name: Upload benchmark JSON
         uses: actions/upload-artifact@v4

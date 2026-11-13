@@ -64,6 +64,12 @@ CREATE TABLE IF NOT EXISTS runs (
     runner_os TEXT,
     runner_arch TEXT,
 
+    -- % of CPU time stolen by the hypervisor for other tenants during the
+    -- run, measured from /proc/stat's "steal" field (see run_local_baseline.sh
+    -- and testall.yml for how it's computed) - NULL where unavailable
+    -- (e.g. non-Linux, or not captured by the caller).
+    cpu_steal_pct DOUBLE PRECISION,
+
     UNIQUE (commit_sha, python_version, ci_run_id, ci_job)
 );
 
@@ -97,11 +103,28 @@ CREATE INDEX IF NOT EXISTS idx_benchmarks_name ON benchmarks (name);
 CREATE INDEX IF NOT EXISTS idx_runs_commit ON runs (commit_sha);
 """
 
+# CREATE TABLE IF NOT EXISTS above is a no-op once the table already exists,
+# so columns added after the table was first created need an explicit
+# migration here too.
+MIGRATIONS = """
+ALTER TABLE runs ADD COLUMN IF NOT EXISTS cpu_steal_pct DOUBLE PRECISION;
+"""
+
 
 def create_schema(conn) -> None:
     with conn.cursor() as cur:
         cur.execute(SCHEMA)
+        cur.execute(MIGRATIONS)
     conn.commit()
+
+
+def _parse_float(value) -> float | None:
+    if value is None or value == "":
+        return None
+    try:
+        return float(value)
+    except ValueError:
+        return None
 
 
 def run_fields(payload: dict, source_file: str) -> dict:
@@ -148,6 +171,7 @@ def run_fields(payload: dict, source_file: str) -> dict:
         "runner_name": os.environ.get("RUNNER_NAME"),
         "runner_os": os.environ.get("RUNNER_OS"),
         "runner_arch": os.environ.get("RUNNER_ARCH"),
+        "cpu_steal_pct": _parse_float(os.environ.get("STEAL_PCT")),
     }
 
 

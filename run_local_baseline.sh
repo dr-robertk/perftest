@@ -11,7 +11,24 @@ while true; do
     json_file="local-${timestamp}.json"
 
     echo "[$(date -Iseconds)] running benchmark suite..."
+
+    # Same /proc/stat "steal" measurement as testall.yml, for consistency -
+    # on this dedicated, non-virtualized host it should read ~0%, which is
+    # itself a useful confirmation that the baseline is actually contention-free.
+    read -r _ u1 n1 s1 i1 w1 irq1 sirq1 st1 _ < /proc/stat
+    total1=$((u1+n1+s1+i1+w1+irq1+sirq1+st1))
+
     if pytest --benchmark-only --benchmark-json="$json_file"; then
+        read -r _ u2 n2 s2 i2 w2 irq2 sirq2 st2 _ < /proc/stat
+        total2=$((u2+n2+s2+i2+w2+irq2+sirq2+st2))
+        steal_delta=$((st2 - st1))
+        total_delta=$((total2 - total1))
+        if [ "$total_delta" -gt 0 ]; then
+            STEAL_PCT=$(awk -v s="$steal_delta" -v t="$total_delta" 'BEGIN { printf "%.4f", (s/t)*100 }')
+        else
+            STEAL_PCT="0"
+        fi
+        export STEAL_PCT
         python ingest_benchmarks.py "$json_file"
     else
         echo "[$(date -Iseconds)] pytest failed, skipping ingestion" >&2
