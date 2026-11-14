@@ -46,6 +46,21 @@ jobs:
           flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
           flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
 
+      # One-off: checks whether perf counters, SMT topology, and live CPU
+      # frequency are observable on this runner at all, writing findings to
+      # Supabase's platform_diagnostics table (see check_platform_diagnostics.py).
+      # Only needs to run once per trigger, not once per replica - remove
+      # this step once we've seen the results and decided what's worth
+      # building on top of it (e.g. a cache-latency probe).
+      - name: Check platform diagnostic capabilities
+        if: matrix.replica == 1
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq linux-tools-common linux-tools-generic "linux-tools-$(uname -r)" || true
+          python check_platform_diagnostics.py
+
       - name: Run performance benchmarks
         run: |
           # Snapshot /proc/stat's "steal" field (CPU time the hypervisor gave
