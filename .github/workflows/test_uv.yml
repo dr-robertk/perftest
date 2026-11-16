@@ -1,0 +1,84 @@
+# This workflow installs Python dependencies and runs the benchmark suite
+# 3 times in parallel on Python 3.14.4 - Python version was checked and found
+# to have no measurable effect on timing, so this just maximizes independent
+# hardware-sample throughput per trigger rather than testing compatibility.
+
+name: Testing
+
+on:
+  # Run on every push to main
+  push:
+    branches: ["uv"]
+
+  # Run every hour
+  # schedule:
+  #   - cron: '0 * * * *'
+  # Run when a PR targets main
+  pull_request:
+    branches: ["main"]
+
+jobs:
+  build:
+    runs-on: ubuntu-26.04
+    env:
+      PYTHON_VERSION: "3.14.10"
+
+    strategy:
+      fail-fast: false
+      matrix:
+        replica: [1, 2, 3]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7.0.1
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v10.3.3
+        with:
+          version: "0.13.8"
+          enable-cache: true
+
+      - name: Install Python and dependencies
+        run: |
+          uv python install "$PYTHON_VERSION"
+          uv sync --locked --python "$PYTHON_VERSION" --all-packages --all-groups
+
+      - name: Run performance benchmarks
+        run: |
+          # Snapshot /proc/stat's "steal" field (CPU time the hypervisor gave
+          # to another tenant instead of us) before and after, so we can
+          # record what share of this run's wall-clock was lost to that -
+          # a direct measurement of co-tenancy contention, rather than
+          # inferring it indirectly from how noisy the results look.
+          read -r _ u1 n1 s1 i1 w1 irq1 sirq1 st1 _ < /proc/stat
+          total1=$((u1+n1+s1+i1+w1+irq1+sirq1+st1))
+
+          uv run --locked --python "$PYTHON_VERSION" pytest \
+            --benchmark-only \
+            --benchmark-json=benchmark-${{ matrix.replica }}.json
+
+          read -r _ u2 n2 s2 i2 w2 irq2 sirq2 st2 _ < /proc/stat
+          total2=$((u2+n2+s2+i2+w2+irq2+sirq2+st2))
+          steal_delta=$((st2 - st1))
+          total_delta=$((total2 - total1))
+          if [ "$total_delta" -gt 0 ]; then
+            steal_pct=$(awk -v s="$steal_delta" -v t="$total_delta" 'BEGIN { printf "%.4f", (s/t)*100 }')
+          else
+            steal_pct="0"
+          fi
+          echo "Steal time during benchmark run: ${steal_pct}%"
+          echo "STEAL_PCT=$steal_pct" >> "$GITHUB_ENV"
+
+      - name: Upload benchmark JSON
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: benchmark-replica-${{ matrix.replica }}
+          path: benchmark-${{ matrix.replica }}.json
+
+      - name: Ingest benchmark results into Supabase
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+          CI_MATRIX_LABEL: replica-${{ matrix.replica }}
+        run: |
+          uv run --locked --python "$PYTHON_VERSION" python ingest_benchmarks.py \
+            benchmark-${{ matrix.replica }}.json

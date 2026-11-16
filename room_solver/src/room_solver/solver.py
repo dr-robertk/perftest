@@ -1,6 +1,6 @@
 import numpy as np
 
-from config import ITERATIONS, N, W, omega1, omega2, omega3, step_size
+from .config import ITERATIONS, N, W, omega1, omega2, omega3, step_size
 
 # from room import plot_temp_rooms
 

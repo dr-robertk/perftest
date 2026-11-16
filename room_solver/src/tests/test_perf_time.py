@@ -1,5 +1,5 @@
-from config import N
-from singleThread import solveDirichletNeumann
+from room_solver.config import N
+from room_solver.solver import solveDirichletNeumann
 
 
 def test_process_data(benchmark):

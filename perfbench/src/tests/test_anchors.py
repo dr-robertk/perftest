@@ -1,5 +1,4 @@
-from anchor_matmul import matmul_anchor
-from anchor_memcopy import memcopy_anchor
+from perfbench.anchors import matmul_anchor, memcopy_anchor
 
 
 def test_anchor_matmul(benchmark):

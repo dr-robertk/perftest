@@ -1,5 +1,5 @@
 import numpy as np
-from room import Boundary, Room
+from .room import Boundary, Room
 
 # Tunable parameters
 WALL = 15
