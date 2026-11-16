@@ -7,8 +7,8 @@ name: Testing
 
 on:
   # Run on every push to main
-  push:
-    branches: ["uv"]
+  # push:
+  #   branches: ["uv"]
 
   # Run every hour
   # schedule:
@@ -82,3 +82,4 @@ jobs:
         run: |
           uv run --locked --python "$PYTHON_VERSION" python ingest_benchmarks.py \
             benchmark-${{ matrix.replica }}.json
+
