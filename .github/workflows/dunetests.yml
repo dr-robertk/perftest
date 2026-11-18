@@ -1,0 +1,188 @@
+---
+name: testing dune 
+# yamllint disable rule:line-length
+
+# environment variables and their defaults for push 
+# and schedules events where the input is empty
+env:
+  LOGLEVEL: Warning
+  BRANCH: master
+  FEMBRANCH: master
+  DOWNLOAD: 'https://github.com/dune-project'
+
+# Controls when the action will run.
+on:    # yamllint disable-line rule:truthy
+  # run on push
+  #push:
+  # schedule test for nightly build
+  #schedule:
+  #  - cron: "22 0 * * *"
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+    # Note: the defaults are repeated within the env section
+    #       of some of the jobs so any change to the default
+    #       need to be done twice!
+    inputs:
+      branch:
+        # note: this should be either 'master' or a tag of the form
+        #       vN where 'N' is a legal python package version
+        #       e.g. N=2.9.0rc1
+        #       otherwise the distributions will not be generated
+        #       and the build will fail
+        type: string
+        description: 'core modules tag e.g. (master | v2.9.0) [master]'
+        required: true
+        default: 'master'
+      fembranch:
+        # note: this should be either 'master' or a tag of the form
+        #       vN where 'N' is a legal python package version
+        #       e.g. N=2.9.0rc1
+        #       otherwise the distributions will not be generated
+        #       and the build will fail
+        type: string
+        description: 'dune-fem modules tag e.g. (master | v2.9.0.1) [master]'
+        required: true
+        default: 'master'
+      runTests:
+        type: boolean
+        description: run tests [true]
+        required: true
+        default: true
+      logLevel:
+        type: choice
+        description: 'Log level [Warning]'
+        required: true
+        default: 'Warning'
+        options:
+          - Debug
+          - Warning
+          - Info
+          - error
+      download:
+        type: string
+        description: 'source location, change if needed [https://gitlab.dune-project.org]'
+        required: true
+        # set default to dune gitlab for manual triggering for schedual github is used
+        # (see setting of DOWNLAOD in env above)
+        default: 'https://github.com/dune-project'
+        #default: 'https://gitlab.dune-project.org'
+      # needed only for dispatching from other repo
+      distinct_id:
+        required: false
+        description: 'set when dispatching from external repo - leave empty'
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # generate test file matrix
+  getTests:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.setmatrix.outputs.matrix }}
+    steps:
+      - name: echo distinct ID ${{ github.event.inputs.distinct_id }}
+        if: github.event.inputs.distinct_id != ''
+        run: echo ${{ github.event.inputs.distinct_id }}
+      - name: printParameters
+        run: |
+          echo "Workflow parameters"
+          echo "Using github branch   : ${GITHUB_REF#refs/heads/}"
+          echo "Using log level       : ${{ github.event.inputs.logLevel }}"
+          echo "Using dune-core branch: ${{ github.event.inputs.branch }}"
+          echo "Using dune-fem  branch: ${{ github.event.inputs.fembranch }}"
+          echo "Source repo download from ${{ github.event.inputs.download }}"
+          echo "Run tests: ${{ github.event.inputs.runTests }}"
+      - name: checkout source code
+        uses: actions/checkout@v6
+      - id: setmatrix
+        run: |
+          matrixArray=$(find ./testing -name '*.sh') # Creates array of all files .sh within testing
+          # Start Generate Json String
+          echo "$matrixArray" | \
+            jq --slurp --raw-input 'split("\n")[:-1]' | \
+            jq  "{\"filepath\": .[], \"os\":\"ubuntu-latest\" }, {\"filepath\": .[], \"os\": \"macOS-latest\" }" | \
+            jq -sc "{ \"include\": . }" > tmp
+          cat ./tmp
+          # End Generate Json String
+          matrixStringifiedObject=$(cat ./tmp) # Use this as jq @sh not working right
+          # echo "::set-output name=matrix::$matrixStringifiedObject"
+          # this is the new version to fix deprecated set-output
+          echo "matrix=$matrixStringifiedObject" >> $GITHUB_OUTPUT
+
+  # build packages
+  build:
+    name: build
+    runs-on: [ubuntu-latest]
+    steps:
+      - name: environmentLog
+        if: github.event.inputs.logLevel != ''
+        run: echo "LOGLEVEL=${{ github.event.inputs.logLevel }}" >> $GITHUB_ENV
+      - name: environmentCore
+        if: github.event.inputs.branch != ''
+        run: echo "BRANCH=${{ github.event.inputs.branch }}" >> $GITHUB_ENV
+      - name: environmentFem
+        if: github.event.inputs.fembranch != ''
+        run: echo "FEMBRANCH=${{ github.event.inputs.fembranch }}" >> $GITHUB_ENV
+      - name: environmentDownload
+        if: github.event.inputs.download != ''
+        run: echo "DOWNLOAD=${{ github.event.inputs.download }}" >> $GITHUB_ENV
+      - name: starting
+        uses: actions/checkout@v6
+      - name: clone dune from ${{ env.DOWNLOAD }} using branch ${{ env.BRANCH }} and build python packages
+        run: |
+          pip install scikit-build
+          ./clone-modules $BRANCH $FEMBRANCH "none" $DOWNLOAD
+      - name: upload artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: packages
+          path: dist/
+
+  # test packages
+  test:
+    if: ${{ !contains(inputs.runTests, 'false') }}
+    name: run scripts
+    needs: [build, getTests]
+    strategy:
+      fail-fast: false
+      # Note:
+      # 1) macOS does not install petsc4py
+      matrix: ${{fromJson(needs.getTests.outputs.matrix)}}
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: starting
+        uses: actions/checkout@v6
+      - name: environmentLog
+        if: github.event.inputs.logLevel != ''
+        run: echo "LOGLEVEL=${{ github.event.inputs.logLevel }}" >> $GITHUB_ENV
+      - name: environmentCore
+        if: github.event.inputs.branch != ''
+        run: echo "BRANCH=${{ github.event.inputs.branch }}" >> $GITHUB_ENV
+      - name: environmentFem
+        if: github.event.inputs.fembranch != ''
+        run: echo "FEMBRANCH=${{ github.event.inputs.fembranch }}" >> $GITHUB_ENV
+      - name: environmentDownload
+        if: github.event.inputs.download != ''
+        run: echo "DOWNLOAD=${{ github.event.inputs.download }}" >> $GITHUB_ENV
+      - name: download artifacts
+        uses: actions/download-artifact@v7
+        # if all packages exist on pypi then no artifacts are uploaded so don't fail
+        continue-on-error: true
+        with:
+          name: packages
+          path: dist
+      - name: Install dependencies
+        run: bash ./ossetup "$RUNNER_OS"
+        shell: bash
+      - name: Run test
+        run: |
+            export DUNEPY_DISABLE_PLOTTING=1
+            export DUNE_LOG_LEVEL=$LOGLEVEL
+            echo "Running: ${{ matrix.filepath }} $BRANCH $FEMBRANCH $RUNNER_OS $DOWNLOAD"
+            ls -R
+            tar xzf dist/repos.tar.gz
+            mkdir test
+            cd test
+            bash -e ../${{ matrix.filepath }} $BRANCH $FEMBRANCH $RUNNER_OS $DOWNLOAD
+        # allow dumux test to fail    
+        continue-on-error: contains( fromJSON('["dumux.sh", "dunefunctions.sh"]'), ${{ matrix.filepath }})
+        shell: bash

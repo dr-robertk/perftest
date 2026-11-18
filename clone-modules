@@ -1,0 +1,90 @@
+coretag=$1
+femtag=$2
+upload=$3                     # not used - consider removing
+download=$4
+coreversion="${1:1}"
+femversion="${2:1}"
+
+base=$download
+if [ "$base" = "https://gitlab.dune-project.org" ]; then
+  echo "using dune gitlab for download"
+  coreurl="$base/core"
+  femurl="$base/dune-fem"
+  exturl="$base/extensions"
+else
+  echo "using fork for download - assuming no subgrouping is used"
+  coreurl="$base"
+  femurl="$base"
+  exturl="$base"
+fi
+echo "versions: $coreversion, $femversion (tags $coretag, $femtag)"
+ls .
+echo Downloading dune-common into $PWD
+set +e
+git clone --depth 1 -b $coretag $coreurl/dune-common.git > /dev/null 2>&1
+if [ ! $? = 0 ]; then # the branch/tag didn't exist so use master
+  echo "using dune-common master since $coretag branch not found!"
+  git clone --depth 1 $coreurl/dune-common.git > /dev/null 2>&1
+else
+  echo "cloned dune-common $coretag"
+fi
+set -e
+base=$PWD
+mkdir dist
+mkdir repos
+
+. package
+# export -f package
+
+cd repos
+
+#################################
+
+# download modules into repos
+declare -A coremodules
+coremodules+=(
+  [dune-common]='dune-common.git'
+  [dune-geometry]='dune-geometry.git'
+  [dune-grid]='dune-grid.git'
+  [dune-istl]='dune-istl.git'
+  [dune-localfunctions]='dune-localfunctions.git'
+)
+declare -A femmodules
+femmodules=(
+  [dune-fem]='dune-fem.git'
+  [dune-fem-dg]='dune-fem-dg.git'
+  [dune-vem]='dune-vem.git'
+)
+declare -A extramodules
+extramodules=(
+  [dune-alugrid]='dune-alugrid.git'
+  [dune-polygongrid]='dune-polygongrid.git'
+  [dune-spgrid]='dune-spgrid.git'
+)
+
+#########################################
+
+#########################################
+
+echo "Cloning core modules into $PWD"
+for m in "${!coremodules[@]}" ; do
+  p="${coremodules[$m]}"
+  clonemodule $m "$coreurl/$p" $coreversion $coretag
+done
+echo "Cloning fem modules into $PWD"
+for m in "${!femmodules[@]}" ; do
+  p="${femmodules[$m]}"
+  clonemodule $m "$femurl/$p" $femversion $femtag
+done
+echo "Cloning extra modules into $PWD"
+for m in "${!extramodules[@]}" ; do
+  p="${extramodules[$m]}"
+  clonemodule $m "$exturl/$p" $coreversion $coretag
+done
+
+#####################################
+
+mv */dist/*.tar.gz ../dist
+cd ..
+
+tar cvzf dist/repos.tar.gz repos > /dev/null 2>&1
