@@ -6,6 +6,14 @@ set -eu
 
 INTERVAL="${BASELINE_INTERVAL_SECONDS:-3600}"
 
+# One-time platform characterization (BLAS threading, perf/SMT/frequency
+# availability) - same script as the CI diagnostic step, tagged
+# ci_provider='local' automatically. Platform characteristics don't change
+# between loop iterations on the same dedicated machine, so this runs once
+# at container startup, not on every cycle.
+echo "[$(date -Iseconds)] running platform diagnostics..."
+python check_platform_diagnostics.py || echo "[$(date -Iseconds)] platform diagnostics failed, continuing anyway" >&2
+
 while true; do
     timestamp=$(date +%s)
     json_file="local-${timestamp}.json"

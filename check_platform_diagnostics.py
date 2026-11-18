@@ -9,9 +9,12 @@ Usage:
 
 import json
 import os
+import resource
 import subprocess
+import time
 from datetime import datetime, timezone
 
+import numpy as np
 import psycopg2
 import psycopg2.extras
 
@@ -94,6 +97,47 @@ def check_frequency() -> dict:
     return result
 
 
+def check_blas_threading() -> dict:
+    """Compares total CPU time (summed across all threads via getrusage,
+    which aggregates the whole process on Linux) against wall-clock time
+    during a matmul call. A ratio near 1.0 means single-threaded; a ratio
+    near N means roughly N cores were engaged concurrently - this works
+    regardless of which BLAS library is in use or which env vars (if any)
+    control its thread count, unlike checking OMP_NUM_THREADS/
+    OPENBLAS_NUM_THREADS directly, which only apply to specific backends.
+    """
+    try:
+        blas_name = np.__config__.show(mode="dicts")["Build Dependencies"]["blas"]["name"]
+    except Exception as e:
+        blas_name = f"unknown ({e})"
+
+    n = 5120
+    rng = np.random.default_rng(seed=0)
+    a = rng.random((n, n))
+    b = rng.random((n, n))
+
+    a @ b  # warmup - avoid counting BLAS's own thread-pool spin-up
+
+    cpu_before = resource.getrusage(resource.RUSAGE_SELF)
+    wall_before = time.perf_counter()
+    a @ b
+    wall_after = time.perf_counter()
+    cpu_after = resource.getrusage(resource.RUSAGE_SELF)
+
+    wall_elapsed = wall_after - wall_before
+    cpu_elapsed = (cpu_after.ru_utime + cpu_after.ru_stime) - (
+        cpu_before.ru_utime + cpu_before.ru_stime
+    )
+    ratio = cpu_elapsed / wall_elapsed if wall_elapsed > 0 else None
+
+    return {
+        "blas_name": blas_name,
+        "wall_seconds": wall_elapsed,
+        "cpu_seconds": cpu_elapsed,
+        "cpu_to_wall_ratio": ratio,
+    }
+
+
 def main() -> None:
     _load_dotenv()
     db_url = os.environ.get("SUPABASE_DB_URL")
@@ -103,11 +147,13 @@ def main() -> None:
     perf_ok, perf_output = check_perf()
     topo = check_topology()
     freq = check_frequency()
+    blas = check_blas_threading()
 
     print("perf available:", perf_ok)
     print("perf output:", perf_output)
     print("topology:", topo)
     print("frequency:", freq)
+    print("blas threading:", blas)
 
     conn = psycopg2.connect(db_url)
     try:
@@ -128,22 +174,30 @@ def main() -> None:
                 """
             )
             cur.execute(
+                "ALTER TABLE platform_diagnostics ADD COLUMN IF NOT EXISTS blas_info JSONB"
+            )
+            cur.execute(
+                "ALTER TABLE platform_diagnostics ADD COLUMN IF NOT EXISTS ci_provider TEXT"
+            )
+            cur.execute(
                 """
                 INSERT INTO platform_diagnostics
-                    (created_at, ci_run_id, perf_available, perf_output,
-                     smt_enabled, threads_per_core, cpu_model_name, frequency_info)
-                VALUES (%(created_at)s, %(ci_run_id)s, %(perf_available)s, %(perf_output)s,
-                        %(smt_enabled)s, %(threads_per_core)s, %(cpu_model_name)s, %(frequency_info)s)
+                    (created_at, ci_run_id, ci_provider, perf_available, perf_output,
+                     smt_enabled, threads_per_core, cpu_model_name, frequency_info, blas_info)
+                VALUES (%(created_at)s, %(ci_run_id)s, %(ci_provider)s, %(perf_available)s, %(perf_output)s,
+                        %(smt_enabled)s, %(threads_per_core)s, %(cpu_model_name)s, %(frequency_info)s, %(blas_info)s)
                 """,
                 {
                     "created_at": datetime.now(timezone.utc),
                     "ci_run_id": os.environ.get("GITHUB_RUN_ID"),
+                    "ci_provider": "github" if os.environ.get("GITHUB_ACTIONS") else "local",
                     "perf_available": perf_ok,
                     "perf_output": perf_output,
                     "smt_enabled": topo.get("smt_enabled"),
                     "threads_per_core": topo.get("threads_per_core"),
                     "cpu_model_name": topo.get("cpu_model_name"),
                     "frequency_info": psycopg2.extras.Json(freq),
+                    "blas_info": psycopg2.extras.Json(blas),
                 },
             )
         conn.commit()
