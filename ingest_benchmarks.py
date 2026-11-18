@@ -92,6 +92,10 @@ CREATE TABLE IF NOT EXISTS benchmarks (
     total_seconds DOUBLE PRECISION,
     data_json JSONB,
 
+    -- from pytest-benchmark's per-test options (not stats) - whether the
+    -- cyclic garbage collector was disabled during this test's timed rounds
+    disable_gc BOOLEAN,
+
     -- code-level configuration the test recorded via benchmark.extra_info,
     -- e.g. the PDE grid size (n) used for that run
     grid_n INTEGER,
@@ -110,6 +114,7 @@ CREATE INDEX IF NOT EXISTS idx_runs_commit ON runs (commit_sha);
 MIGRATIONS = """
 ALTER TABLE runs ADD COLUMN IF NOT EXISTS cpu_steal_pct DOUBLE PRECISION;
 ALTER TABLE benchmarks ADD COLUMN IF NOT EXISTS iterations INTEGER;
+ALTER TABLE benchmarks ADD COLUMN IF NOT EXISTS disable_gc BOOLEAN;
 """
 
 
@@ -181,6 +186,7 @@ def benchmark_rows(payload: dict) -> list[dict]:
     rows = []
     for bench in payload.get("benchmarks", []):
         stats = bench.get("stats") or {}
+        options = bench.get("options") or {}
         extra_info = bench.get("extra_info") or {}
         rows.append(
             {
@@ -196,6 +202,7 @@ def benchmark_rows(payload: dict) -> list[dict]:
                 "rounds": stats.get("rounds"),
                 "iterations": stats.get("iterations"),
                 "total_seconds": stats.get("total"),
+                "disable_gc": options.get("disable_gc"),
                 "data_json": psycopg2.extras.Json(stats["data"])
                 if "data" in stats
                 else None,
