@@ -105,14 +105,3 @@ echo "**********************************************************\n"
 cd dune-fem-dg/pydemo/camc-paper
 # mpirun -np 2 --oversubscribe python3 advection.py 2
 $PYTHON_INTERP advection.py 2
-
-cd $DUNE_PATH
-echo "*****************************************"
-echo "Running twophaseflow.py from fem-tutorial"
-echo "*****************************************\n"
-$PYTHON_INTERP -m dune.fem
-cd fem_tutorial
-
-#mpirun -np 2 --oversubscribe python3 laplace-adaptive.py
-# $PYTHON_INTERP laplace-adaptive.py
-$PYTHON_INTERP twophaseflow.py testing
