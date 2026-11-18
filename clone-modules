@@ -53,12 +53,10 @@ declare -A femmodules
 femmodules=(
   [dune-fem]='dune-fem.git'
   [dune-fem-dg]='dune-fem-dg.git'
-  [dune-vem]='dune-vem.git'
 )
 declare -A extramodules
 extramodules=(
   [dune-alugrid]='dune-alugrid.git'
-  [dune-polygongrid]='dune-polygongrid.git'
   [dune-spgrid]='dune-spgrid.git'
 )
 
