@@ -21,7 +21,15 @@ def test_anchor_memcopy(benchmark):
 
 
 def test_anchor_memcopy_optimized(benchmark):
+    # Unlike the other anchors, a single call here is only ~55-190ms (no
+    # allocation overhead left to pad it out), short enough that fixed
+    # per-call costs (timer resolution, dispatch overhead) may dominate the
+    # measurement proportionally. iterations=10 batches 10 calls per timed
+    # sample (pytest-benchmark divides the batch time by 10 for the
+    # reported per-call mean), bringing the measured duration back to
+    # ~0.5-1.9s - the same order of magnitude as the other anchors - without
+    # reintroducing any allocation.
     benchmark.extra_info["n"] = MEMCOPY_OPTIMIZED_N
-    result = benchmark.pedantic(memcopy_anchor_optimized, iterations=1, rounds=10)
+    result = benchmark.pedantic(memcopy_anchor_optimized, iterations=10, rounds=10)
 
     assert result.shape == (MEMCOPY_OPTIMIZED_N,)
