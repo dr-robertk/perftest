@@ -88,6 +88,7 @@ CREATE TABLE IF NOT EXISTS benchmarks (
     iqr_seconds DOUBLE PRECISION,
     ops DOUBLE PRECISION,
     rounds INTEGER,
+    iterations INTEGER,
     total_seconds DOUBLE PRECISION,
     data_json JSONB,
 
@@ -108,6 +109,7 @@ CREATE INDEX IF NOT EXISTS idx_runs_commit ON runs (commit_sha);
 # migration here too.
 MIGRATIONS = """
 ALTER TABLE runs ADD COLUMN IF NOT EXISTS cpu_steal_pct DOUBLE PRECISION;
+ALTER TABLE benchmarks ADD COLUMN IF NOT EXISTS iterations INTEGER;
 """
 
 
@@ -192,6 +194,7 @@ def benchmark_rows(payload: dict) -> list[dict]:
                 "iqr_seconds": stats.get("iqr"),
                 "ops": stats.get("ops"),
                 "rounds": stats.get("rounds"),
+                "iterations": stats.get("iterations"),
                 "total_seconds": stats.get("total"),
                 "data_json": psycopg2.extras.Json(stats["data"])
                 if "data" in stats
