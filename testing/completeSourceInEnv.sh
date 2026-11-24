@@ -11,6 +11,3 @@ cd ../testing
 
 # start dg test
 python3 testdg.py
-
-#cd dune-fem-dg/pydemo/euler
-#python3 testdg.py
