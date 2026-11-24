@@ -36,15 +36,24 @@ parameters = {"fem.ode.odesolver": "EX",
 #-----------------
 
 Model = problem()
-# use shorter end time for testing
-# Model.endTime = 0.4
-Model.endTime = 0.025
 Model.exact = None
 
-run(Model,
-    startLevel=0, polOrder=2, limiter="default",
-    primitive=primitive, saveStep=0.04, subsamp=2,
-    dt=None,threading=True,grid="alucube", space="dgonb",
-    parameters=parameters)
+def runDGTest(T = 0.25):
+    Model.endTime = T
+    solution, counters = run(Model,
+            startLevel=4, polOrder=2, limiter="default",
+            primitive=primitive, saveStep=1e10, subsamp=2,
+            dt=None,threading=False,grid="alucube", space="dgonb",
+            parameters=parameters)
+    print(f"*** Run time = {counters[1]} sec ***")
 
-# print(str(parameter))
+# use shorter end time for testing and compilation
+runDGTest(T=0.01)
+
+#########################################
+##
+##  TODO: Add below the timing routines
+##
+#########################################
+
+runDGTest(T=0.1)

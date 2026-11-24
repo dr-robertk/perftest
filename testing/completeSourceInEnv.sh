@@ -7,10 +7,9 @@ pip install matplotlib mpi4py scipy numpy
 cd ../repos
 dune-common/bin/dunecontrol --module=dune.fem.dg all
 cd -
-
-ls
-
 cd ../testing
+
+# start dg test
 python3 testdg.py
 
 #cd dune-fem-dg/pydemo/euler
