@@ -6,8 +6,10 @@ name: testing dune
 # and schedules events where the input is empty
 env:
   LOGLEVEL: Warning
-  BRANCH: master
-  FEMBRANCH: master
+  #BRANCH: master
+  #FEMBRANCH: master
+  BRANCH: s2026.11
+  FEMBRANCH: s2026.11
   DOWNLOAD: 'https://gitlab.maths.lu.se/dune/'
 
 # Controls when the action will run.
@@ -32,7 +34,7 @@ on:    # yamllint disable-line rule:truthy
         type: string
         description: 'core modules tag e.g. (master | v2.9.0) [master]'
         required: true
-        default: 'master'
+        default: 's2026.11'
       fembranch:
         # note: this should be either 'master' or a tag of the form
         #       vN where 'N' is a legal python package version
@@ -42,7 +44,7 @@ on:    # yamllint disable-line rule:truthy
         type: string
         description: 'dune-fem modules tag e.g. (master | v2.9.0.1) [master]'
         required: true
-        default: 'master'
+        default: 's2026.11'
       runTests:
         type: boolean
         description: run tests [true]
