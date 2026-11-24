@@ -8,7 +8,9 @@ cd ../repos
 dune-common/bin/dunecontrol --module=dune.fem.dg all
 cd -
 
-cd testing
+ls
+
+cd ../testing
 python3 testdg.py
 
 #cd dune-fem-dg/pydemo/euler
